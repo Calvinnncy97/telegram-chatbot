@@ -23,7 +23,7 @@ sources_index = list(range(len(sources)))
 interests_index = list(range(len(interests)))
 
 def main ():
-    PORT = int(os.environ.get('PORT', 5000))
+    PORT = int(os.environ.get('PORT', 8443))
     TOKEN = "1634506742:AAHG73RFafEhaRzg9VNOHSqY_sclGoVmAjk"
     updater = Updater(token=TOKEN, use_context=True, request_kwargs={'read_timeout': 10, 'connect_timeout': 10})
     dispatcher = updater.dispatcher
@@ -45,8 +45,9 @@ def main ():
     updater.job_queue.start()
     updater.start_webhook(listen="0.0.0.0",
                           port=int(PORT),
-                          url_path=TOKEN)
-    updater.bot.setWebhook('https://glacial-coast-67656.herokuapp.com/' + TOKEN)
+                          url_path=TOKEN,
+                          webhook_url='https://glacial-coast-67656.herokuapp.com/' + TOKEN)
+    #updater.bot.setWebhook('https://glacial-coast-67656.herokuapp.com/' + TOKEN)
     updater.idle()
 
 
