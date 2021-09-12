@@ -23,7 +23,7 @@ class Firestore:
         else:
             cred = credentials.Certificate({
                         "type": os.environ["SERVICE_ACCOUNT"],
-                        "projectId": os.environ["PROJECT_ID"],
+                        "project_id": os.environ["PROJECT_ID"],
                         "private_key_id": os.environ["PRIVATE_KEY_ID"],
                         "private_key": os.environ["PRIVATE_KEY"].replace('\\n', '\n'),
                         "client_id": os.environ["CLIENT_ID"],
