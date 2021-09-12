@@ -26,7 +26,7 @@ class Firestore:
                     firebase_admin.credentials.Certificate({
                         "type":os.environ["SERVICE_ACCOUNT"],
                         "projectId":  os.environ["PROJECT_ID"],
-                        "private_key": os.environ["PRIVATE_KEY"],
+                        "private_key": os.environ["PRIVATE_KEY"].replace('\\n', '\n'),
                         "client_email": os.environ["CLIENT_EMAIL"],
                         "token_uri":os.environ["TOKEN_URI"]
                     })
