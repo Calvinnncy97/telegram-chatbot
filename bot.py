@@ -176,7 +176,8 @@ def update_projects (context: CallbackContext):
 
     for project in projects_list:
         Firestore.add_projects(project.title, project.get_dict())
- 
+    
+    update_feed_for_all_users(context)
     
 
 
@@ -211,6 +212,42 @@ def update_feed (update:Update, context: CallbackContext):
                                     first= time(hour=9),    
                                     last=time(hour=23, minute=59),        
                                     context=[int(update.effective_user.id),projects],
+                                    name="update feed"
+                                    )
+        context.job_queue.start()
+
+
+
+def update_feed_for_all_users (context: CallbackContext):
+    '''
+        TODO: 
+        1. Get a list of projects relevant to user's interest and sources
+        2. Find projects which are new to user
+        3. Shuffle the sequence
+        4. Design the message
+        5. Send them at random interval 
+    '''
+    print ("update_feed")
+    for user in Firestore.getInstance().collection("users").stream():
+        user = Firestore.get_user(user.id)
+        projects =  [x.to_dict() for x in Firestore.getInstance().collection(u'projects').where(u"sent_users", u'not-in', [[update.effective_user.id]]).stream()]
+        projects = [i for i in projects if i['category'] != "" if str(interests.index(i['category'])) in user['interests'] and str(sources.index(i['source'])) in user['sources']]
+        print ("user verified")
+        print (len(projects))
+        context.job_queue.run_once (
+            callback=send_project,
+            when=3,
+            context=[int(user.id),projects]
+        )
+        
+        remove_job_if_exists("update feed", context)
+
+        context.job_queue.run_repeating(
+                                    callback=send_project, 
+                                    interval=timedelta(hours=random.randint(0,2), minutes=random.randint(0,59)),
+                                    first= time(hour=9),    
+                                    last=time(hour=23, minute=59),        
+                                    context=[int(user.id),projects],
                                     name="update feed"
                                     )
         context.job_queue.start()
