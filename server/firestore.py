@@ -24,9 +24,10 @@ class Firestore:
             firebase_admin.initialize_app(
                 credential={
                     firebase_admin.credentials.Certificate({
+                        "type":os.environ["SERVICE_ACCOUNT"],
                         "projectId":  os.environ["PROJECT_ID"],
                         "private_key": os.environ["PRIVATE_KEY"],
-                        "client_email": os.environ["CLIENT_EMAIL"],
+                        "client_email": os.environ["CLIENT_EMAIL"]
                     })
             })
             
