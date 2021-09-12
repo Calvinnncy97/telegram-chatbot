@@ -21,16 +21,20 @@ class Firestore:
         if Firestore._instance != None:
             raise Exception("This class is a singleton!")
         else:
-            firebase_admin.initialize_app(
-                credential={
-                    firebase_admin.credentials.Certificate({
-                        "type":os.environ["SERVICE_ACCOUNT"],
-                        "projectId":  os.environ["PROJECT_ID"],
+            cred = credentials.Certificate({
+                        "type": os.environ["SERVICE_ACCOUNT"],
+                        "projectId": os.environ["PROJECT_ID"],
+                        "private_key_id": os.environ["PRIVATE_KEY_ID"],
                         "private_key": os.environ["PRIVATE_KEY"].replace('\\n', '\n'),
+                        "client_id": os.environ["CLIENT_ID"],
                         "client_email": os.environ["CLIENT_EMAIL"],
-                        "token_uri":os.environ["TOKEN_URI"]
-                    })
-            })
+                        "auth_uri": os.environ["AUTH_URI"],
+                        "token_uri": os.environ["TOKEN_URI"],
+                        "auth_provider_x509_cert_url": os.environ["AUTH_PROVIDER_CERT"],
+                        "client_x509_cert_url": os.environ["CLIENT_CERT"]
+                    }
+                )
+            firebase_admin.initialize_app(cred)
             
                
             db = firestore.client()
