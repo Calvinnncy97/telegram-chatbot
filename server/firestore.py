@@ -20,7 +20,7 @@ class Firestore:
         if Firestore._instance != None:
             raise Exception("This class is a singleton!")
         else:
-            cred = credentials.Certificate("D:\OneDrive\Projects-LAPTOP-70DJABIA\Collaboroo\Product\Chatbot\server\collaboroo-bot-firebase-adminsdk-1u5db-86b91a6cb0.json")
+            cred = credentials.Certificate("collaboroo-bot-firebase-adminsdk-1u5db-86b91a6cb0.json")
             firebase_admin.initialize_app(cred)
 
             db = firestore.client()
