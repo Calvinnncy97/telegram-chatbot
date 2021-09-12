@@ -43,7 +43,6 @@ def main ():
                           port=int(PORT),
                           url_path=TOKEN,
                           webhook_url='https://glacial-coast-67656.herokuapp.com/' + TOKEN)
-    #updater.bot.setWebhook('https://glacial-coast-67656.herokuapp.com/' + TOKEN)
     updater.idle()
 
 
@@ -193,33 +192,33 @@ def update_feed (update:Update, context: CallbackContext):
         user = Firestore.get_user(str(update.effective_chat.id))
         projects =  [x.to_dict() for x in Firestore.getInstance().collection(u'projects').where(u"sent_users", u'not-in', [[update.effective_user.id]]).stream()]
         projects = [i for i in projects if str(interests.index(i['category'])) in user['interests'] and str(sources.index(i['source'])) in user['sources']]
-      
-        if (len(projects)>0):
-            context.job_queue.run_once (
-                callback=send_project,
-                when=3,
-                context=[int(update.effective_user.id),projects]
-            )
-            
-            remove_job_if_exists("update feed", context)
+ 
+        context.job_queue.run_once (
+            callback=send_project,
+            when=3,
+            context=[int(update.effective_user.id),projects]
+        )
+        
+        remove_job_if_exists("update feed", context)
 
-            context.job_queue.run_repeating(
-                                        callback=send_project, 
-                                        interval=timedelta(hours=random.randint(0,2), minutes=random.randint(0,59)),
-                                        first= time(hour=9),    
-                                        last=time(hour=23, minute=59),        
-                                        context=[int(update.effective_user.id),projects],
-                                        name="update feed"
-                                        )
-            context.job_queue.start()
+        context.job_queue.run_repeating(
+                                    callback=send_project, 
+                                    interval=timedelta(hours=random.randint(0,2), minutes=random.randint(0,59)),
+                                    first= time(hour=9),    
+                                    last=time(hour=23, minute=59),        
+                                    context=[int(update.effective_user.id),projects],
+                                    name="update feed"
+                                    )
+        context.job_queue.start()
  
 
 
 def send_project (context: CallbackContext):
     user_id, projects = context.job.context
-    project = projects.pop(random.randint(0,len(projects)-1))
-    if project == None:
-        return 
+    if len(projects) == 0:
+        return
+    else:
+        project = projects.pop(random.randint(0,len(projects)-1))
 
     message = f"*{project['title']}*\n\n{project['description']}\n\nImage/Content Source: [{project['source'].capitalize()}]({project['link']})"
 
