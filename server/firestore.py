@@ -1,6 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+import os
 
 user_collection = "users"
 project_collection = "projects"
@@ -21,8 +22,16 @@ class Firestore:
             raise Exception("This class is a singleton!")
         else:
             cred = credentials.Certificate("collaboroo-bot-firebase-adminsdk-1u5db-86b91a6cb0.json")
-            firebase_admin.initialize_app(cred)
-
+            firebase_admin.initialize_app(
+                credential={
+                    firebase_admin.credentials.Certificate({
+                        "projectId":  os.environ["PROJECT_ID"],
+                        "private_key": os.environ["PRIVATE_KEY"],
+                        "client_email": os.environ["CLIENT_EMAIL"],
+                    })
+            })
+            
+               
             db = firestore.client()
             Firestore._instance = db
     
