@@ -27,7 +27,8 @@ class Firestore:
                         "type":os.environ["SERVICE_ACCOUNT"],
                         "projectId":  os.environ["PROJECT_ID"],
                         "private_key": os.environ["PRIVATE_KEY"],
-                        "client_email": os.environ["CLIENT_EMAIL"]
+                        "client_email": os.environ["CLIENT_EMAIL"],
+                        "token_uri":os.environ["TOKEN_URI"]
                     })
             })
             
