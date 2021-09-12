@@ -204,7 +204,7 @@ def update_feed (update:Update, context: CallbackContext):
             context=[int(update.effective_user.id),projects]
         )
         
-        remove_job_if_exists("update feed", context)
+        remove_job_if_exists(f"update feed {update.effective_user.id}", context)
 
         context.job_queue.run_repeating(
                                     callback=send_project, 
@@ -212,7 +212,7 @@ def update_feed (update:Update, context: CallbackContext):
                                     first= time(hour=9),    
                                     last=time(hour=23, minute=59),        
                                     context=[int(update.effective_user.id),projects],
-                                    name="update feed"
+                                    name=f"update feed {update.effective_user.id}"
                                     )
         context.job_queue.start()
 
@@ -240,7 +240,7 @@ def update_feed_for_all_users (context: CallbackContext):
             context=[int(user.id),projects]
         )
         
-        remove_job_if_exists("update feed", context)
+        remove_job_if_exists(f"update feed {user.id}", context)
 
         context.job_queue.run_repeating(
                                     callback=send_project, 
@@ -248,7 +248,7 @@ def update_feed_for_all_users (context: CallbackContext):
                                     first= time(hour=9),    
                                     last=time(hour=23, minute=59),        
                                     context=[int(user.id),projects],
-                                    name="update feed"
+                                    name=f"update feed {user.id}"
                                     )
         context.job_queue.start()
  
