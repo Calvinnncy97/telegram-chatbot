@@ -21,7 +21,6 @@ class Firestore:
         if Firestore._instance != None:
             raise Exception("This class is a singleton!")
         else:
-            cred = credentials.Certificate("collaboroo-bot-firebase-adminsdk-1u5db-86b91a6cb0.json")
             firebase_admin.initialize_app(
                 credential={
                     firebase_admin.credentials.Certificate({
