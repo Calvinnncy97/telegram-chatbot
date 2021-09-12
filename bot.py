@@ -162,6 +162,8 @@ def update_user (update:Update, context: CallbackContext):
         text="Fantastico! New projects will come your way soon!", 
     )
 
+    update_feed(update, context)
+
    
 
 
@@ -188,11 +190,13 @@ def update_feed (update:Update, context: CallbackContext):
         4. Design the message
         5. Send them at random interval 
     '''
+    print ("update_feed")
     if Firestore.check_user(str(update.effective_user.id)):
         user = Firestore.get_user(str(update.effective_chat.id))
         projects =  [x.to_dict() for x in Firestore.getInstance().collection(u'projects').where(u"sent_users", u'not-in', [[update.effective_user.id]]).stream()]
-        projects = [i for i in projects if str(interests.index(i['category'])) in user['interests'] and str(sources.index(i['source'])) in user['sources']]
- 
+        projects = [i for i in projects if i['category'] != "" if str(interests.index(i['category'])) in user['interests'] and str(sources.index(i['source'])) in user['sources']]
+        print ("user verified")
+        print (len(projects))
         context.job_queue.run_once (
             callback=send_project,
             when=3,
@@ -230,7 +234,7 @@ def send_project (context: CallbackContext):
             break
 
     context.bot.send_media_group(
-        context,
+        chat_id=user_id,
         media = photos,
         timeout=30
     )
