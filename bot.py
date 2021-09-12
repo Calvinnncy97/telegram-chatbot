@@ -34,13 +34,9 @@ def main ():
     dispatcher.add_handler(CallbackQueryHandler(update_source, pattern='^update_source'))
     dispatcher.add_handler(CallbackQueryHandler(update_interest, pattern='^update_interest'))
     dispatcher.add_handler(CallbackQueryHandler(update_user, pattern='^user'))
-    # updater.job_queue.run_daily(
-    #     callback=update_projects,
-    #     time=time(hour=0, minute=0, second=0)
-    # )
-    updater.job_queue.run_once(
+    updater.job_queue.run_daily(
         callback=update_projects,
-        when=1
+        time=time(hour=0, minute=0, second=0)
     )
     updater.job_queue.start()
     updater.start_webhook(listen="0.0.0.0",
