@@ -306,8 +306,10 @@ def remove_job_if_exists(name: str, context: CallbackContext) -> bool:
 
 
 
-def wake_heroku ():
+def wake_heroku (context:CallbackContext):
     print ("I am alive")
 
-if __name__ == "__bot__":
+
+
+if __name__ == "__main__":
     main()
