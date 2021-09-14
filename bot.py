@@ -38,6 +38,16 @@ def main ():
         callback=update_projects,
         time=time(hour=0, minute=0, second=0)
     )
+    updater.job_queue.run_repeating(
+        callback=update_feed_for_all_users, 
+        interval=timedelta(hours=random.randint(0,2), minutes=random.randint(0,59)),
+        first= time(hour=9),    
+        last=time(hour=23, minute=59),        
+    )
+    updater.job_queue.run_repeating(
+        callback=wake_heroku,
+        interval=timedelta(minutes=25)
+    )
     updater.job_queue.start()
     updater.start_webhook(listen="0.0.0.0",
                           port=int(PORT),
@@ -162,7 +172,7 @@ def update_user (update:Update, context: CallbackContext):
         text="Fantastico! New projects will come your way soon!", 
     )
 
-    update_feed(update, context)
+    # update_feed(update, context)
 
    
 
@@ -177,69 +187,51 @@ def update_projects (context: CallbackContext):
     for project in projects_list:
         Firestore.add_projects(project.title, project.get_dict())
     
-    update_feed_for_all_users(context)
-    
 
 
 
-def update_feed (update:Update, context: CallbackContext):
-    '''
-        TODO: 
-        1. Get a list of projects relevant to user's interest and sources
-        2. Find projects which are new to user
-        3. Shuffle the sequence
-        4. Design the message
-        5. Send them at random interval 
-    '''
-    print ("update_feed")
-    if Firestore.check_user(str(update.effective_user.id)):
-        user = Firestore.get_user(str(update.effective_chat.id))
-        projects =  [x.to_dict() for x in Firestore.getInstance().collection(u'projects').where(u"sent_users", u'not-in', [[update.effective_user.id]]).stream()]
-        projects = [i for i in projects if i['category'] != "" if str(interests.index(i['category'])) in user['interests'] and str(sources.index(i['source'])) in user['sources']]
-        print ("user verified")
-        print (len(projects))
-        context.job_queue.run_once (
-            callback=send_project,
-            when=3,
-            context=[int(update.effective_user.id),projects]
-        )
+# def update_feed (update:Update, context: CallbackContext):
+#     '''
+#         TODO: 
+#         1. Get a list of projects relevant to user's interest and sources
+#         2. Find projects which are new to user
+#         3. Shuffle the sequence
+#         4. Design the message
+#         5. Send them at random interval 
+#     '''
+#     print ("update_feed")
+#     if Firestore.check_user(str(update.effective_user.id)):
+#         user = Firestore.get_user(str(update.effective_chat.id))
+#         projects =  [x.to_dict() for x in Firestore.getInstance().collection(u'projects').where(u"sent_users", u'not-in', [[update.effective_user.id]]).stream()]
+#         projects = [i for i in projects if i['category'] != "" if str(interests.index(i['category'])) in user['interests'] and str(sources.index(i['source'])) in user['sources']]
+#         print ("user verified")
+#         print (len(projects))
+#         context.job_queue.run_once (
+#             callback=send_project,
+#             when=3,
+#             context=[int(update.effective_user.id),projects]
+#         )
         
-        remove_job_if_exists(f"update feed {update.effective_user.id}", context)
+#         remove_job_if_exists(f"update feed {update.effective_user.id}", context)
 
-        context.job_queue.run_repeating(
-                                    callback=send_project, 
-                                    interval=timedelta(hours=random.randint(0,2), minutes=random.randint(0,59)),
-                                    first= time(hour=9),    
-                                    last=time(hour=23, minute=59),        
-                                    context=[int(update.effective_user.id),projects],
-                                    name=f"update feed {update.effective_user.id}"
-                                    )
-        context.job_queue.start()
+#         context.job_queue.run_repeating(
+#                                     callback=send_project, 
+#                                     interval=timedelta(hours=random.randint(0,2), minutes=random.randint(0,59)),
+#                                     first= time(hour=9),    
+#                                     last=time(hour=23, minute=59),        
+#                                     context=[int(update.effective_user.id),projects],
+#                                     name=f"update feed {update.effective_user.id}"
+#                                     )
+#         context.job_queue.start()
 
 
 
 def update_feed_for_all_users (context: CallbackContext):
-    '''
-        TODO: 
-        1. Get a list of projects relevant to user's interest and sources
-        2. Find projects which are new to user
-        3. Shuffle the sequence
-        4. Design the message
-        5. Send them at random interval 
-    '''
-    print ("update_feed")
     for user in Firestore.getInstance().collection("users").stream():
         user = Firestore.get_user(user.id)
-        projects =  [x.to_dict() for x in Firestore.getInstance().collection(u'projects').where(u"sent_users", u'not-in', [[update.effective_user.id]]).stream()]
+        projects =  [x.to_dict() for x in Firestore.getInstance().collection(u'projects').where(u"sent_users", u'not-in', [[user.id]]).stream()]
         projects = [i for i in projects if i['category'] != "" if str(interests.index(i['category'])) in user['interests'] and str(sources.index(i['source'])) in user['sources']]
-        print ("user verified")
-        print (len(projects))
-        context.job_queue.run_once (
-            callback=send_project,
-            when=3,
-            context=[int(user.id),projects]
-        )
-        
+
         remove_job_if_exists(f"update feed {user.id}", context)
 
         context.job_queue.run_repeating(
@@ -247,7 +239,7 @@ def update_feed_for_all_users (context: CallbackContext):
                                     interval=timedelta(hours=random.randint(0,2), minutes=random.randint(0,59)),
                                     first= time(hour=9),    
                                     last=time(hour=23, minute=59),        
-                                    context=[int(user.id),projects],
+                                    context=[user.id, projects.pop(random.randint(0,len(projects)-1))],
                                     name=f"update feed {user.id}"
                                     )
         context.job_queue.start()
@@ -255,11 +247,10 @@ def update_feed_for_all_users (context: CallbackContext):
 
 
 def send_project (context: CallbackContext):
-    user_id, projects = context.job.context
-    if len(projects) == 0:
+    user_id, project = context.job.context
+    if project == None:
+        print ("There is no project")
         return
-    else:
-        project = projects.pop(random.randint(0,len(projects)-1))
 
     message = f"*{project['title']}*\n\n{project['description']}\n\nImage/Content Source: [{project['source'].capitalize()}]({project['link']})"
 
@@ -302,6 +293,8 @@ def create_callback_string (callback_string = "", new_state = "", new_query = ""
 
     return ".".join([state, query, chosen_sources, chosen_interests])
 
+
+
 def remove_job_if_exists(name: str, context: CallbackContext) -> bool:
     """Remove job with given name. Returns whether job was removed."""
     current_jobs = context.job_queue.get_jobs_by_name(name)
@@ -311,4 +304,10 @@ def remove_job_if_exists(name: str, context: CallbackContext) -> bool:
         job.schedule_removal()
     return True
 
-main()
+
+
+def wake_heroku ():
+    print ("I am alive")
+
+if __name__ == "__bot__":
+    main()
